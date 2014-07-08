@@ -1,0 +1,58 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright Red Hat, Inc., and individual contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.cordova.android.reflect;
+
+import android.util.Log;
+import org.apache.cordova.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+public class BasePlugin extends CordovaPlugin {
+
+  private static final String TAG = BasePlugin.class.getSimpleName();
+
+  @Override
+  public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    try {
+      final int length = args.length();
+      Class[] classArgs = new Class[length + 1];
+      Object[] values = new Object[length + 1];
+      for (int i = 0; i < length; i++) {
+        classArgs[i] = args.get(i).getClass();
+        values[i] = args.get(i);
+      }
+      classArgs[length] = CallbackContext.class;
+      values[length] = callbackContext;
+      final Method method = getClass().getMethod(action, classArgs);
+      final Object invoke = method.invoke(this, values);
+      if (invoke instanceof Boolean) {
+        return (Boolean)invoke;
+      }
+    } catch (InvocationTargetException e) {
+      throw new RuntimeException(e);
+    } catch (IllegalAccessException e) {
+      Log.e(TAG, String.format("Unable to invoke the method with name '%s' check permissions", action));
+    } catch (NoSuchMethodException e) {
+      Log.e(TAG, String.format("Plugin '%s' does not have action '%s' method defined", getClass().getSimpleName(), action));
+      callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.INVALID_ACTION));
+    }
+    return false;
+  }
+}
