@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cordova.android.reflect;
+package org.jboss.aerogear.cordova.android.reflect;
 
 import android.util.Log;
 import org.apache.cordova.*;

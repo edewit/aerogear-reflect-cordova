@@ -21,6 +21,6 @@
       </feature>
     </config-file>
     
-    <source-file src="src/android/org/apache/cordova/android/reflect/BasePlugin.java" target-dir="src/org/apache/cordova/android/reflect/"/>
+    <source-file src="src/android/org/jboss/aerogear/cordova/android/reflect/BasePlugin.java" target-dir="src/org/jboss/aerogear/cordova/android/reflect"/>
   </platform>
 </plugin>
