@@ -17,12 +17,16 @@
 package org.jboss.aerogear.cordova.android.reflect;
 
 import android.util.Log;
-import org.apache.cordova.*;
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Iterator;
 
 public class BasePlugin extends CordovaPlugin {
 
@@ -48,11 +52,42 @@ public class BasePlugin extends CordovaPlugin {
     } catch (InvocationTargetException e) {
       throw new RuntimeException(e);
     } catch (IllegalAccessException e) {
-      Log.e(TAG, String.format("Unable to invoke the method with name '%s' check permissions", action));
+      throw new RuntimeException(String.format("Unable to invoke the method with name '%s' check permissions", action), e);
     } catch (NoSuchMethodException e) {
-      Log.e(TAG, String.format("Plugin '%s' does not have action '%s' method defined", getClass().getSimpleName(), action));
-      callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.INVALID_ACTION));
+      throw new RuntimeException(String.format("Plugin '%s' does not have action '%s' method defined", getClass().getSimpleName(), action), e);
     }
     return false;
+  }
+
+  public <T> T convert(JSONObject object, Class<T> type) {
+    return convert(object, type, false);
+  }
+
+  public <T> T convert(JSONObject object, Class<T> type, boolean lenient) {
+    try {
+      T result = type.newInstance();
+      final Iterator iterator = object.keys();
+      while (iterator.hasNext()) {
+        String key = (String) iterator.next();
+        try {
+          Field field = type.getDeclaredField(key);
+          field.setAccessible(true);
+          field.set(result, object.get(key));
+        } catch (NoSuchFieldException e) {
+          if (!lenient) {
+            throw new RuntimeException(e);
+          }
+        }
+      }
+      return result;
+    } catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    } catch (JSONException e) {
+      Log.e(TAG, "The key was here a moment ago");
+    } catch (IllegalAccessException e) {
+      Log.e(TAG, String.format("Unable to invoke the instantiate object of type '%s' check permissions", type));
+    }
+
+    return null;
   }
 }
